@@ -71,7 +71,7 @@ func main() {
 		log.Info("shutting down")
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
-		srv.Shutdown(shutdownCtx)
+		_ = srv.Shutdown(shutdownCtx)
 	}()
 
 	log.Info("listening", "addr", addr, "interval", interval, "packages", len(packages))

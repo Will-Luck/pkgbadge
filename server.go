@@ -39,20 +39,20 @@ func handleBadge(w http.ResponseWriter, r *http.Request, cache *Cache) {
 	stats := cache.Get(key)
 	if stats == nil {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]string{"error": "package not configured"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "package not configured"})
 		return
 	}
 
 	badge, ok := buildBadge(badgeType, stats)
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("unknown badge type: %s", badgeType)})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("unknown badge type: %s", badgeType)})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "max-age=3600")
-	json.NewEncoder(w).Encode(badge)
+	_ = json.NewEncoder(w).Encode(badge)
 }
 
 func buildBadge(badgeType string, stats *PackageStats) (BadgeResponse, bool) {

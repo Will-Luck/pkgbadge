@@ -60,7 +60,9 @@ func TestBadgeHandler_Version(t *testing.T) {
 	}
 
 	var badge BadgeResponse
-	json.Unmarshal(w.Body.Bytes(), &badge)
+	if err := json.Unmarshal(w.Body.Bytes(), &badge); err != nil {
+		t.Fatal(err)
+	}
 	if badge.Message != "2.11.1" {
 		t.Errorf("message = %q, want %q", badge.Message, "2.11.1")
 	}
@@ -75,7 +77,9 @@ func TestBadgeHandler_Arch(t *testing.T) {
 	handler.ServeHTTP(w, req)
 
 	var badge BadgeResponse
-	json.Unmarshal(w.Body.Bytes(), &badge)
+	if err := json.Unmarshal(w.Body.Bytes(), &badge); err != nil {
+		t.Fatal(err)
+	}
 	if badge.Message != "amd64 | arm64" {
 		t.Errorf("message = %q, want %q", badge.Message, "amd64 | arm64")
 	}
