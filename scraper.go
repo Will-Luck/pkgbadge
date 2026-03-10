@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var httpClient = &http.Client{Timeout: 30 * time.Second}
+
 var (
 	// Matches: <h3 title="433">433</h3> after "Total downloads"
 	reDownloads = regexp.MustCompile(`Total downloads</span>\s*<h3[^>]*>([0-9,]+)</h3>`)
@@ -48,6 +50,10 @@ func parsePackagePage(html, owner, pkg string) (*PackageStats, error) {
 		}
 	}
 
+	if stats.TotalPulls == 0 && stats.LatestVersion == "" && len(stats.Architectures) == 0 {
+		return stats, fmt.Errorf("no data extracted from page, HTML structure may have changed")
+	}
+
 	return stats, nil
 }
 
@@ -72,8 +78,9 @@ func fetchPackagePage(ctx context.Context, ref PackageRef) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	req.Header.Set("User-Agent", "pkgbadge/1.0 (github.com/Will-Luck/pkgbadge)")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +90,7 @@ func fetchPackagePage(ctx context.Context, ref PackageRef) (string, error) {
 		return "", fmt.Errorf("HTTP %d from %s", resp.StatusCode, url)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // 2 MiB cap
 	if err != nil {
 		return "", err
 	}

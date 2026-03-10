@@ -53,15 +53,9 @@ func TestParsePackagePage_Architectures(t *testing.T) {
 	}
 }
 
-func TestParsePackagePage_NoDownloads(t *testing.T) {
-	stats, err := parsePackagePage("<html><body>no data here</body></html>", "x", "y")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if stats.TotalPulls != 0 {
-		t.Errorf("TotalPulls = %d, want 0", stats.TotalPulls)
-	}
-	if stats.LatestVersion != "" {
-		t.Errorf("LatestVersion = %q, want empty", stats.LatestVersion)
+func TestParsePackagePage_NoData(t *testing.T) {
+	_, err := parsePackagePage("<html><body>no data here</body></html>", "x", "y")
+	if err == nil {
+		t.Fatal("expected error for page with no extractable data")
 	}
 }
