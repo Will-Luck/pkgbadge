@@ -1,5 +1,10 @@
 # pkgbadge
 
+[![CI](https://github.com/Will-Luck/pkgbadge/actions/workflows/ci.yml/badge.svg)](https://github.com/Will-Luck/pkgbadge/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Will-Luck/pkgbadge)](https://github.com/Will-Luck/pkgbadge/releases)
+[![Licence](https://img.shields.io/github/license/Will-Luck/pkgbadge)](LICENSE)
+[![Docker Pulls](https://img.shields.io/docker/pulls/willluck/pkgbadge)](https://hub.docker.com/r/willluck/pkgbadge)
+
 Self-hosted badge server for GitHub Container Registry. Scrapes GHCR package pages and serves [shields.io endpoint badges](https://shields.io/badges/endpoint-badge) with pull counts, versions, image sizes, and platform info.
 
 ## Features
