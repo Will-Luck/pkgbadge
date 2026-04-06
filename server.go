@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -81,7 +82,7 @@ func buildBadge(badgeType string, stats *PackageStats) (BadgeResponse, bool) {
 		return BadgeResponse{
 			SchemaVersion: 1,
 			Label:         "image size",
-			Message:       formatBytes(0), // TODO: replaced in Task 3 with PlatformSizes
+			Message:       formatSizeMessage(stats.PlatformSizes),
 			Color:         "blue",
 		}, true
 
@@ -130,4 +131,33 @@ func formatBytes(b int64) string {
 	default:
 		return fmt.Sprintf("%d B", b)
 	}
+}
+
+func formatSizeMessage(sizes map[string]int64) string {
+	if len(sizes) == 0 {
+		return "unknown"
+	}
+
+	// Single entry with empty key: unknown platform, plain size.
+	if len(sizes) == 1 {
+		for k, v := range sizes {
+			if k == "" {
+				return formatBytes(v)
+			}
+			return formatBytes(v) + " (" + strings.TrimPrefix(k, "linux/") + ")"
+		}
+	}
+
+	// Multiple platforms: sorted alphabetically by arch.
+	keys := make([]string, 0, len(sizes))
+	for k := range sizes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	parts := make([]string, len(keys))
+	for i, k := range keys {
+		parts[i] = formatBytes(sizes[k]) + " (" + strings.TrimPrefix(k, "linux/") + ")"
+	}
+	return strings.Join(parts, " | ")
 }
