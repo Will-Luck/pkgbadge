@@ -27,16 +27,21 @@ This supports both single-arch and multi-arch images. A nil or empty map means s
 Location: `scraper.go`
 
 ```go
-func fetchImageSizes(ctx context.Context, owner, pkg string) (map[string]int64, error)
+func fetchImageSizes(ctx context.Context, owner, pkg, version string) (map[string]int64, error)
 ```
+
+`version` is the tag extracted by the HTML scraper (e.g. `"2.11.1"`). If empty, falls back to `"latest"`.
 
 ### Flow
 
 1. **Token:** `GET https://ghcr.io/token?scope=repository:{owner}/{pkg}:pull` -- anonymous auth for public packages. Parse JSON response for `token` field.
 
-2. **Manifest:** `GET https://ghcr.io/v2/{owner}/{pkg}/manifests/latest` with headers:
+2. **Manifest:** Try `stats.LatestVersion` first, fall back to `latest`:
+   `GET https://ghcr.io/v2/{owner}/{pkg}/manifests/{tag}` with headers:
    - `Authorization: Bearer {token}`
    - `Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json`
+   
+   If the versioned tag returns a non-200 response, retry with `latest` before giving up.
 
 3. **Parse response by `mediaType`:**
 
@@ -49,7 +54,7 @@ func fetchImageSizes(ctx context.Context, owner, pkg string) (map[string]int64, 
 
    **Single image manifest** (`application/vnd.oci.image.manifest.v1+json` or `application/vnd.docker.distribution.manifest.v2+json`):
    - Sum `layers[].size` directly
-   - Store under `"linux/amd64"` as default key
+   - Store under a neutral key `""` (empty string) -- the badge formatter treats a single entry with an empty key as "no platform label needed" and renders just the size
 
 4. Return the map.
 
@@ -92,15 +97,16 @@ The existing `httpClient` (30s timeout) is reused for registry requests.
 The `"size"` case in `buildBadge` changes to:
 
 - `PlatformSizes` nil or empty: message = `"unknown"`
-- One platform: message = `"82.5 MB"` (just the formatted size, no platform label)
-- Multiple platforms: message = `"82.5 MB (amd64) | 79.1 MB (arm64)"` -- sorted alphabetically by architecture name, `linux/` prefix stripped
+- Single entry with empty key (single-arch, platform unknown): message = `"82.5 MB"` (no platform label)
+- Single entry with non-empty key: message = `"82.5 MB (amd64)"` (include label for clarity)
+- Multiple entries: message = `"82.5 MB (amd64) | 79.1 MB (arm64)"` -- sorted alphabetically by architecture name, `linux/` prefix stripped
 
 ## Integration
 
 In `scrapeAll`, after `parsePackagePage` succeeds:
 
 ```go
-sizes, err := fetchImageSizes(ctx, ref.Owner, ref.Package)
+sizes, err := fetchImageSizes(ctx, ref.Owner, ref.Package, stats.LatestVersion)
 if err != nil {
     log.Warn("size fetch failed", "package", ref.Key(), "error", err)
 } else {
@@ -128,7 +134,8 @@ Test with JSON fixtures:
 
 In `server_test.go`, test the size badge case:
 - Nil `PlatformSizes` returns `"unknown"`
-- Single platform returns plain size (e.g. `"82.5 MB"`)
+- Single entry with empty key returns plain size (e.g. `"82.5 MB"`)
+- Single entry with non-empty key returns labelled size (e.g. `"82.5 MB (amd64)"`)
 - Two platforms returns breakdown (e.g. `"82.5 MB (amd64) | 79.1 MB (arm64)"`)
 
 ### Existing tests
@@ -148,3 +155,6 @@ Unchanged. HTML parsing tests are unaffected since size comes from a separate co
 | `testdata/manifest-single.json` | New fixture: single image manifest |
 | `testdata/manifest-amd64.json` | New fixture: amd64 platform manifest |
 | `testdata/manifest-arm64.json` | New fixture: arm64 platform manifest |
+| `README.md` | Update Badge Types table: size example changes from `12.4 MB` to per-platform format |
+| `wiki/Badge-Usage.md` | Update size row example output to reflect per-platform format |
+| `wiki/Troubleshooting.md` | Rewrite "Badge Shows unknown" section: size now comes from OCI registry API, not HTML scraping |
