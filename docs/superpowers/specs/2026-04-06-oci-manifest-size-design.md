@@ -155,6 +155,7 @@ Unchanged. HTML parsing tests are unaffected since size comes from a separate co
 | `testdata/manifest-single.json` | New fixture: single image manifest |
 | `testdata/manifest-amd64.json` | New fixture: amd64 platform manifest |
 | `testdata/manifest-arm64.json` | New fixture: arm64 platform manifest |
-| `README.md` | Update Badge Types table: size example changes from `12.4 MB` to per-platform format |
+| `README.md` | Update description ("scrapes GHCR pages" wording) and Badge Types table size example |
+| `wiki/Home.md` | Update description to mention OCI registry API for size data |
 | `wiki/Badge-Usage.md` | Update size row example output to reflect per-platform format |
 | `wiki/Troubleshooting.md` | Rewrite "Badge Shows unknown" section: size now comes from OCI registry API, not HTML scraping |
