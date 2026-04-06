@@ -5,7 +5,7 @@
 [![Licence](https://img.shields.io/github/license/Will-Luck/pkgbadge)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/willluck/pkgbadge)](https://hub.docker.com/r/willluck/pkgbadge)
 
-Self-hosted badge server for GitHub Container Registry. Scrapes GHCR package pages and serves [shields.io endpoint badges](https://shields.io/badges/endpoint-badge) with pull counts, versions, image sizes, and platform info.
+Self-hosted badge server for GitHub Container Registry. Scrapes GHCR package pages and the OCI registry API to serve [shields.io endpoint badges](https://shields.io/badges/endpoint-badge) with pull counts, versions, image sizes, and platform info.
 
 ## Features
 
@@ -57,7 +57,7 @@ Then add badges to your README:
 |-------|----------|---------|
 | Pull count | `/owner/package/pulls.json` | `1.5k` |
 | Version | `/owner/package/version.json` | `2.11.1` |
-| Image size | `/owner/package/size.json` | `12.4 MB` |
+| Image size | `/owner/package/size.json` | `82.5 MB (amd64) \| 79.2 MB (arm64)` |
 | Platforms | `/owner/package/arch.json` | `amd64 \| arm64` |
 
 ## Configuration
