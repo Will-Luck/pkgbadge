@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -101,5 +102,51 @@ func TestParsePackages_ThreePart(t *testing.T) {
 	}
 	if ref.Package != "docker-sentinel" {
 		t.Errorf("Package = %q, want %q", ref.Package, "docker-sentinel")
+	}
+}
+
+func TestParseManifestSizes_Index(t *testing.T) {
+	indexBody := loadFixture(t, "manifest-index.json")
+	amd64Body := loadFixture(t, "manifest-amd64.json")
+	arm64Body := loadFixture(t, "manifest-arm64.json")
+
+	fetcher := func(digest string) ([]byte, error) {
+		switch digest {
+		case "sha256:amd64digest":
+			return []byte(amd64Body), nil
+		case "sha256:arm64digest":
+			return []byte(arm64Body), nil
+		default:
+			return nil, fmt.Errorf("unexpected digest: %s", digest)
+		}
+	}
+
+	sizes, err := parseManifestSizes([]byte(indexBody), fetcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sizes) != 2 {
+		t.Fatalf("got %d platforms, want 2", len(sizes))
+	}
+	if sizes["linux/amd64"] != 10000000 {
+		t.Errorf("amd64 = %d, want 10000000", sizes["linux/amd64"])
+	}
+	if sizes["linux/arm64"] != 9000000 {
+		t.Errorf("arm64 = %d, want 9000000", sizes["linux/arm64"])
+	}
+}
+
+func TestParseManifestSizes_Single(t *testing.T) {
+	body := loadFixture(t, "manifest-single.json")
+
+	sizes, err := parseManifestSizes([]byte(body), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sizes) != 1 {
+		t.Fatalf("got %d entries, want 1", len(sizes))
+	}
+	if sizes[""] != 12000000 {
+		t.Errorf("size = %d, want 12000000", sizes[""])
 	}
 }

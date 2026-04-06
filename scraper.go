@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -114,4 +115,73 @@ func scrapeAll(ctx context.Context, packages []PackageRef, cache *Cache, log *sl
 		cache.Set(ref.Key(), stats)
 		log.Info("scraped", "package", ref.Key(), "pulls", stats.TotalPulls, "version", stats.LatestVersion)
 	}
+}
+
+// OCI registry types (private, for JSON parsing only).
+
+type ociTokenResponse struct {
+	Token string `json:"token"`
+}
+
+type ociManifest struct {
+	MediaType string          `json:"mediaType"`
+	Manifests []ociDescriptor `json:"manifests,omitempty"`
+	Layers    []ociDescriptor `json:"layers,omitempty"`
+}
+
+type ociDescriptor struct {
+	MediaType string       `json:"mediaType"`
+	Digest    string       `json:"digest"`
+	Size      int64        `json:"size"`
+	Platform  *ociPlatform `json:"platform,omitempty"`
+}
+
+type ociPlatform struct {
+	OS           string `json:"os"`
+	Architecture string `json:"architecture"`
+}
+
+func parseManifestSizes(body []byte, fetchManifest func(digest string) ([]byte, error)) (map[string]int64, error) {
+	var m ociManifest
+	if err := json.Unmarshal(body, &m); err != nil {
+		return nil, fmt.Errorf("unmarshal manifest: %w", err)
+	}
+
+	if len(m.Manifests) > 0 {
+		return parseIndexSizes(m.Manifests, fetchManifest)
+	}
+	if len(m.Layers) > 0 {
+		return parseSingleSizes(m.Layers), nil
+	}
+	return nil, fmt.Errorf("manifest has no manifests[] or layers[]")
+}
+
+func parseIndexSizes(descriptors []ociDescriptor, fetchManifest func(string) ([]byte, error)) (map[string]int64, error) {
+	sizes := make(map[string]int64)
+	for _, d := range descriptors {
+		if d.Platform == nil || d.Platform.OS == "" || d.Platform.OS == "unknown" {
+			continue
+		}
+		raw, err := fetchManifest(d.Digest)
+		if err != nil {
+			return nil, fmt.Errorf("fetch %s: %w", d.Digest, err)
+		}
+		var pm ociManifest
+		if err := json.Unmarshal(raw, &pm); err != nil {
+			return nil, fmt.Errorf("unmarshal platform manifest %s: %w", d.Digest, err)
+		}
+		key := d.Platform.OS + "/" + d.Platform.Architecture
+		for _, l := range pm.Layers {
+			sizes[key] += l.Size
+		}
+	}
+	return sizes, nil
+}
+
+func parseSingleSizes(layers []ociDescriptor) map[string]int64 {
+	var total int64
+	for _, l := range layers {
+		total += l.Size
+	}
+	return map[string]int64{"": total}
 }
