@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-// newMux returns an http.Handler that serves badge endpoints.
 func newMux(cache *Cache) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
