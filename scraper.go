@@ -111,6 +111,14 @@ func scrapeAll(ctx context.Context, packages []PackageRef, cache *Cache, log *sl
 			log.Warn("parse failed", "package", ref.Key(), "error", err)
 			continue
 		}
+
+		sizes, err := fetchImageSizes(ctx, ref.Owner, ref.Package, stats.LatestVersion)
+		if err != nil {
+			log.Warn("size fetch failed", "package", ref.Key(), "error", err)
+		} else {
+			stats.PlatformSizes = sizes
+		}
+
 		stats.ScrapedAt = time.Now().Unix()
 		cache.Set(ref.Key(), stats)
 		log.Info("scraped", "package", ref.Key(), "pulls", stats.TotalPulls, "version", stats.LatestVersion)
@@ -184,4 +192,83 @@ func parseSingleSizes(layers []ociDescriptor) map[string]int64 {
 		total += l.Size
 	}
 	return map[string]int64{"": total}
+}
+
+const (
+	ghcrTokenURL    = "https://ghcr.io/token?scope=repository:%s/%s:pull"
+	ghcrManifestURL = "https://ghcr.io/v2/%s/%s/manifests/%s"
+	ociAccept       = "application/vnd.oci.image.index.v1+json, " +
+		"application/vnd.docker.distribution.manifest.list.v2+json, " +
+		"application/vnd.oci.image.manifest.v1+json, " +
+		"application/vnd.docker.distribution.manifest.v2+json"
+)
+
+func fetchImageSizes(ctx context.Context, owner, pkg, version string) (map[string]int64, error) {
+	token, err := fetchGHCRToken(ctx, owner, pkg)
+	if err != nil {
+		return nil, fmt.Errorf("token: %w", err)
+	}
+
+	tag := version
+	if tag == "" {
+		tag = "latest"
+	}
+
+	body, err := fetchManifestByTag(ctx, owner, pkg, tag, token)
+	if err != nil && tag != "latest" {
+		body, err = fetchManifestByTag(ctx, owner, pkg, "latest", token)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return parseManifestSizes(body, func(digest string) ([]byte, error) {
+		return fetchManifestByTag(ctx, owner, pkg, digest, token)
+	})
+}
+
+func fetchGHCRToken(ctx context.Context, owner, pkg string) (string, error) {
+	url := fmt.Sprintf(ghcrTokenURL, strings.ToLower(owner), strings.ToLower(pkg))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("token endpoint HTTP %d", resp.StatusCode)
+	}
+
+	var tr ociTokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tr); err != nil {
+		return "", fmt.Errorf("decode token: %w", err)
+	}
+	return tr.Token, nil
+}
+
+func fetchManifestByTag(ctx context.Context, owner, pkg, ref, token string) ([]byte, error) {
+	url := fmt.Sprintf(ghcrManifestURL, strings.ToLower(owner), strings.ToLower(pkg), ref)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", ociAccept)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("manifest HTTP %d for %s", resp.StatusCode, ref)
+	}
+
+	return io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1 MiB cap
 }
