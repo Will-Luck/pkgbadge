@@ -172,16 +172,19 @@ func parseIndexSizes(descriptors []ociDescriptor, fetchManifest func(string) ([]
 		}
 		raw, err := fetchManifest(d.Digest)
 		if err != nil {
-			return nil, fmt.Errorf("fetch %s: %w", d.Digest, err)
+			continue
 		}
 		var pm ociManifest
 		if err := json.Unmarshal(raw, &pm); err != nil {
-			return nil, fmt.Errorf("unmarshal platform manifest %s: %w", d.Digest, err)
+			continue
 		}
 		key := d.Platform.OS + "/" + d.Platform.Architecture
 		for _, l := range pm.Layers {
 			sizes[key] += l.Size
 		}
+	}
+	if len(sizes) == 0 {
+		return nil, fmt.Errorf("no platform manifests resolved")
 	}
 	return sizes, nil
 }
