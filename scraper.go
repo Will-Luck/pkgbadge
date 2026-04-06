@@ -58,7 +58,6 @@ func parsePackagePage(html, owner, pkg string) (*PackageStats, error) {
 	return stats, nil
 }
 
-// PackageRef identifies a configured package to scrape.
 type PackageRef struct {
 	Owner   string
 	Repo    string // may differ from Package (e.g. Docker-Sentinel vs docker-sentinel)
@@ -70,7 +69,6 @@ func (r PackageRef) Key() string {
 	return strings.ToLower(r.Owner + "/" + r.Package)
 }
 
-// fetchPackagePage downloads the GitHub packages HTML page.
 func fetchPackagePage(ctx context.Context, ref PackageRef) (string, error) {
 	url := fmt.Sprintf("https://github.com/%s/%s/pkgs/container/%s",
 		ref.Owner, ref.Repo, ref.Package)
@@ -98,7 +96,6 @@ func fetchPackagePage(ctx context.Context, ref PackageRef) (string, error) {
 	return string(body), nil
 }
 
-// scrapeAll fetches and parses stats for every configured package.
 func scrapeAll(ctx context.Context, packages []PackageRef, cache *Cache, log *slog.Logger) {
 	for _, ref := range packages {
 		html, err := fetchPackagePage(ctx, ref)
