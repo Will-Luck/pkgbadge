@@ -17,7 +17,7 @@ Add OCI registry manifest fetching to the scraper. After scraping the HTML page 
 Replace `SizeBytes int64` with:
 
 ```go
-PlatformSizes map[string]int64 // key: "linux/amd64", value: total compressed layer bytes
+PlatformSizes map[string]int64 // key: "linux/amd64" or "" for unknown platform; value: total compressed layer bytes
 ```
 
 This supports both single-arch and multi-arch images. A nil or empty map means size is unknown.
@@ -121,7 +121,7 @@ if err != nil {
 Extract the JSON-to-map logic into a testable helper:
 
 ```go
-func parseManifestSizes(indexBody []byte, fetchManifest func(digest string) ([]byte, error)) (map[string]int64, error)
+func parseManifestSizes(body []byte, fetchManifest func(digest string) ([]byte, error)) (map[string]int64, error)
 ```
 
 Test with JSON fixtures:
