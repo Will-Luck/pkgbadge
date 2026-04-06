@@ -81,7 +81,7 @@ func buildBadge(badgeType string, stats *PackageStats) (BadgeResponse, bool) {
 		return BadgeResponse{
 			SchemaVersion: 1,
 			Label:         "image size",
-			Message:       formatBytes(stats.SizeBytes),
+			Message:       formatBytes(0), // TODO: replaced in Task 3 with PlatformSizes
 			Color:         "blue",
 		}, true
 

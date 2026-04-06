@@ -9,7 +9,7 @@ type PackageStats struct {
 	TotalPulls    int
 	LatestVersion string
 	Architectures []string
-	SizeBytes     int64  // from OCI manifest, 0 if unknown
+	PlatformSizes map[string]int64 // key: "linux/amd64" or "" for unknown platform; value: compressed bytes
 	ScrapedAt     int64  // unix timestamp
 }
 
