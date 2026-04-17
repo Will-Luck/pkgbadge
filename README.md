@@ -3,7 +3,11 @@
 [![CI](https://github.com/Will-Luck/pkgbadge/actions/workflows/ci.yml/badge.svg)](https://github.com/Will-Luck/pkgbadge/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Will-Luck/pkgbadge)](https://github.com/Will-Luck/pkgbadge/releases)
 [![Licence](https://img.shields.io/github/license/Will-Luck/pkgbadge)](LICENSE)
-[![Docker Pulls](https://img.shields.io/docker/pulls/willluck/pkgbadge)](https://hub.docker.com/r/willluck/pkgbadge)
+[![GHCR](https://img.shields.io/badge/ghcr.io-will--luck%2Fpkgbadge-blue?logo=github)](https://github.com/Will-Luck/pkgbadge/pkgs/container/pkgbadge)
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-willluck%2Fpkgbadge-blue?logo=docker)](https://hub.docker.com/r/willluck/pkgbadge)
+[![Pulls](https://img.shields.io/endpoint?url=https://pkgbadge.pphserv.uk/Will-Luck/pkgbadge/pulls.json)](https://github.com/Will-Luck/pkgbadge/pkgs/container/pkgbadge)
+[![Image Size](https://img.shields.io/endpoint?url=https://pkgbadge.pphserv.uk/Will-Luck/pkgbadge/size.json)](https://github.com/Will-Luck/pkgbadge/pkgs/container/pkgbadge)
+[![Platforms](https://img.shields.io/endpoint?url=https://pkgbadge.pphserv.uk/Will-Luck/pkgbadge/arch.json)](https://github.com/Will-Luck/pkgbadge/pkgs/container/pkgbadge)
 
 Self-hosted badge server for GitHub Container Registry. Scrapes GHCR package pages and the OCI registry API to serve [shields.io endpoint badges](https://shields.io/badges/endpoint-badge) with pull counts, versions, image sizes, and platform info.
 

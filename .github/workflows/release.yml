@@ -45,6 +45,10 @@ jobs:
         id: version
         run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
+      - name: Generate build date
+        id: build-date
+        run: echo "value=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -56,6 +60,9 @@ jobs:
             ghcr.io/will-luck/pkgbadge:${{ steps.version.outputs.tag }}
             willluck/pkgbadge:latest
             willluck/pkgbadge:${{ steps.version.outputs.tag }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.tag }}
+            BUILD_DATE=${{ steps.build-date.outputs.value }}
 
       - name: Build binaries
         run: |
