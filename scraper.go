@@ -16,8 +16,10 @@ import (
 var httpClient = &http.Client{Timeout: 30 * time.Second}
 
 var (
-	// Matches: <h3 title="433">433</h3> after "Total downloads"
-	reDownloads = regexp.MustCompile(`Total downloads</span>\s*<h3[^>]*>([0-9,]+)</h3>`)
+	// Reads the title attribute on the count <h3> after "Total downloads".
+	// GitHub keeps the exact integer in title="..." even when the visible text
+	// is abbreviated (e.g. "1.32K" for 1318), so we always read the title.
+	reDownloads = regexp.MustCompile(`Total downloads</span>\s*<h3[^>]*\btitle="([0-9,]+)"`)
 
 	// Matches: <span class="text-normal h2 mr-1 color-fg-muted" >2.11.1</span>
 	reVersion = regexp.MustCompile(`class="text-normal h2[^"]*color-fg-muted"[^>]*>([^<]+)</span>`)

@@ -61,6 +61,23 @@ func TestParsePackagePage_NoData(t *testing.T) {
 	}
 }
 
+func TestParsePackagePage_AbbreviatedDownloads(t *testing.T) {
+	// Once a package crosses ~1,000 downloads GitHub renders the text as
+	// "1.32K" but keeps the exact integer in the title attribute.
+	// See GiteaLN/pkgbadge scraper bug: 0-pull badges for iplayer-arr and
+	// docker-sentinel even though both packages have four-figure pull counts.
+	html := `<span class="text-normal h2 mr-1 color-fg-muted" >v1.2.3</span>` +
+		`<span class="d-block color-fg-muted text-small tmp-mb-1">Total downloads</span>` +
+		`<h3 title="1318">1.32K</h3>`
+	stats, err := parsePackagePage(html, "Will-Luck", "iplayer-arr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.TotalPulls != 1318 {
+		t.Errorf("TotalPulls = %d, want 1318", stats.TotalPulls)
+	}
+}
+
 func TestParsePackages(t *testing.T) {
 	tests := []struct {
 		input string
