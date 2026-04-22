@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-04-22
+
 ### Fixed
 
 - Pull counts over 1,000 now scrape correctly. GitHub renders these as abbreviated text (e.g. `1.32K` for 1,318) which the old regex could not parse, so packages above the threshold silently reported zero pulls. The scraper now reads the exact integer from the `title` attribute on the count `<h3>`, which GitHub populates regardless of display format.
